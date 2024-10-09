@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // Enviar la solicitud al servidor
-            const response = await fetch('./chat', {
+            const response = await fetch('/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
             displayMessage(`Modelo AI: ${data.reply}`);
         } catch (error) {
             console.error('Error al enviar el mensaje:', error);
-            displayMessage('Error al obtener la respuesta del servidor.');
+            displayMessage('Error al obtener la respuesta | Faltan datos.');
         }
     }
 
