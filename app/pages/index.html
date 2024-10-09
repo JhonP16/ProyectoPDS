@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URUTE</title>
+    <link rel="stylesheet" href="../public/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo">
+            <i class="fas fa-clock"></i>
+            <span>URUTE</span>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#">Sobre nosotros</a></li>
+                <li><a href="#">Recursos</a></li>
+                <li><a href="#">Como funciona</a></li>
+            </ul>
+        </nav>
+        <div class="registros">
+            <a href="../pages/login.html" class="login">Log in</a>
+            <a href="#" class="get-started">Get started</a>
+        </div>
+    </header>
+
+    <main>
+        <section class="principal">
+            <h1>Make up uRute, in <span class="luz">minutes</span>.</h1>
+            <button class="boton">Generate AI Rute</button>
+            <p>Your personalized uRute is ready! <i class="fas fa-confetti"></i></p>
+        </section>
+
+        <div id="chat-container">
+            <div id="chatbox">
+                <div id="messages"></div>
+                <div>
+                    <input type="text" id="user-input" placeholder="Escriba sus actividades...">
+                    <button type="submit" onclick="sendMessage()">Enviar</button>
+                </div>
+            </div>
+        </div>
+        
+    </main>
+
+    <script src="../public/chat.js"></script>
+</body>
+</html>

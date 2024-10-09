@@ -1,0 +1,131 @@
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f7fb;
+    color: #333;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    font-size: 24px;
+    color: #7a3eec;
+}
+
+.logo i {
+    margin-right: 10px;
+}
+
+.navbar nav ul {
+    list-style-type: none;
+    display: flex;
+    gap: 20px;
+}
+
+.navbar nav ul li a {
+    text-decoration: none;
+    color: #333;
+}
+
+.registros a {
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+}
+
+.registros .login {
+    color: #7a3eec;
+    border: 1px solid #7a3eec;
+}
+
+.registros .get-started {
+    background-color: #7a3eec;
+    color: white;
+}
+
+.principal {
+    text-align: center;
+    padding: 100px 0;
+    background-color: #eef0fc;
+}
+
+.principal h1 {
+    font-size: 48px;
+    margin: 0;
+}
+
+.principal .luz {
+    color: #7a3eec;
+}
+
+.boton {
+    margin-top: 20px;
+    padding: 15px 30px;
+    background-color: #7a3eec;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 18px;
+    cursor: pointer;
+}
+#chat-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background-color: #f0f4ff;
+}
+
+#chatbox {
+    display: flex;
+    flex-direction: column; /* Cambiar a columna para permitir scroll */
+    width: 100%;
+    max-width: 800px;
+    max-height: 400px; /* Establecer una altura máxima */
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 30px;
+    padding: 10px 20px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    overflow-y: auto; /* Activar el scroll vertical */
+}
+
+#messages {
+    flex-grow: 1; /* Permitir que el área de mensajes crezca */
+    overflow-y: auto; /* Activar el scroll vertical */
+}
+
+#user-input {
+    border: none;
+    outline: none;
+    font-size: 16px;
+    padding: 10px;
+    width: 680px;
+    border-radius: 30px;
+    background-color: #f0f4ff;
+}
+
+button {
+    background-color: #7a3eec;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+button:hover {
+    background-color: #6632c7;
+}
