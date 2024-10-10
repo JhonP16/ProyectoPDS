@@ -1,66 +1,64 @@
 const express = require('express');
-const axios = require('axios'); // Para hacer peticiones a Hugging Face
+const axios = require('axios');
 const bodyParser = require('body-parser');
 const path = require('path');
-const chrono = require('chrono-node');  // Para procesar fechas
+const chrono = require('chrono-node');
 require('dotenv').config();
 
 const app = express();
-const port = 3000;
+const port = 4000;
 
-// Servir archivos estáticos de la carpeta raíz
 app.use(express.static(__dirname));
-app.use(bodyParser.json()); // Parsear los datos como JSON
+app.use(bodyParser.json());
 
-
-// Almacenar eventos en memoria (puedes usar una base de datos para producción)
 let eventos = [];
 
+// Función para solicitar respuesta a Hugging Face con un modelo de lenguaje
+const obtenerRespuestaIA = async (mensajeUsuario) => {
+    const apiKey = process.env.HUGGING_FACE_API_KEY;
+    console.log('Api',apiKey);
+    const apiURL = 'https://api-inference.huggingface.co/models/gpt2';
+    
+    try {
+        const response = await axios.post(apiURL, 
+            {
+                inputs: mensajeUsuario,
+                parameters: {
+                    max_length: 50, // Limitar la longitud de la respuesta para que sea corta
+                    temperature: 0.7 // Controlar la creatividad del modelo (0.7 es un buen balance)
+                }
+            },
+            {
+                headers: { 'Authorization': `Bearer ${apiKey}` }
+            }
+        );
 
-// Función para manejar saludos y despedidas
-const manejarSaludoODespedida = (mensaje) => {
-    const saludoDespedida = mensaje.toLowerCase();
-    if (saludoDespedida.includes('hola')) {
-        return '¡Hola! ¿En qué puedo ayudarte hoy?';
-    }
-    if (saludoDespedida.includes('gracias')) {
-        return '¡De nada! Siempre feliz de ayudar.';
-    }
-    if (saludoDespedida.includes('adiós') || saludoDespedida.includes('adios')) {
-        return '¡Hasta luego! Que tengas un buen día.';
-    }
-    return null;  // No es saludo ni despedida
-};
-
-
-// Función para generar una sugerencia simple de horario
-const generarSugerenciaHorario = (parsedDate) => {
-    const hour = parsedDate.getHours();
-    if (hour < 9) {
-        return "El horario es bastante temprano, ¿podrías considerarlo más tarde?";
-    } else if (hour >= 22) {
-        return "El horario es muy tarde, quizás sería mejor programarlo más temprano.";
-    } else {
-        return "El horario parece adecuado para esta actividad.";
+        return response.data[0].generated_text;
+    } catch (error) {
+        console.error('Error al obtener respuesta de Hugging Face:', error);
+        return 'Lo siento, hubo un problema al procesar tu solicitud.';
     }
 };
-
-// Función para reprogramar un evento
-const reprogramarEvento = (titulo, nuevaFecha) => {
-    const evento = eventos.find(e => e.title.includes(titulo)); // Busca eventos que contengan el título
-    if (evento) {
-        evento.start = nuevaFecha.toISOString(); // Actualiza la fecha del evento
-        return evento;
-    }
-    return null; // Evento no encontrado
-};
-
 
 // Ruta para manejar el chat
-
-app.post('./public/chat', async (req, res) => {
+app.post('/chat', async (req, res) => {
     const prompt = req.body.prompt;
     console.log('Mensaje recibido del usuario:', prompt);
+
+    // Función para manejar saludos y despedidas
+    const manejarSaludoODespedida = (mensaje) => {
+        const saludoDespedida = mensaje.toLowerCase();
+        if (saludoDespedida.includes('hola')) {
+            return '¡Hola! ¿En qué puedo ayudarte hoy?';
+        }
+        if (saludoDespedida.includes('gracias')) {
+            return '¡De nada! Siempre feliz de ayudar.';
+        }
+        if (saludoDespedida.includes('adiós') || saludoDespedida.includes('adios')) {
+            return '¡Hasta luego! Que tengas un buen día.';
+        }
+        return null;  // No es saludo ni despedida
+    };
 
     // Verificar si es un saludo o despedida
     const saludoRespuesta = manejarSaludoODespedida(prompt);
@@ -68,64 +66,14 @@ app.post('./public/chat', async (req, res) => {
         return res.json({ reply: saludoRespuesta });
     }
 
-    // Reprogramación de eventos
-    if (prompt.toLowerCase().includes('reprogramar')) {
-        const parsedResults = chrono.parse(prompt);
-        if (parsedResults.length === 0) {
-            return res.status(400).send('No se pudo encontrar una nueva fecha en el texto.');
-        }
-        const nuevaFecha = parsedResults[0].start.date();
-        const tituloEvento = prompt.match(/reprogramar (.+?) a/i);
-        
-        if (!tituloEvento || tituloEvento.length < 2) {
-            return res.status(400).send('Por favor proporciona el título del evento a reprogramar.');
-        }
+    // Si no es un saludo, obtener respuesta generada por IA
+    const respuestaIA = await obtenerRespuestaIA(prompt);
 
-        const eventoReprogramado = reprogramarEvento(tituloEvento[1].trim(), nuevaFecha);
-
-        if (eventoReprogramado) {
-            // Generar sugerencia simple de mejora sobre el nuevo horario
-            const suggestion = generarSugerenciaHorario(nuevaFecha);
-            return res.json({ reply: `El evento "${tituloEvento[1].trim()}" ha sido reprogramado a ${nuevaFecha.toISOString()}. Sugerencia: ${suggestion}` });
-        } else {
-            return res.status(404).send('Evento no encontrado.');
-        }
-    }
-
-    // Extraer fecha y hora del texto usando chrono-node
-    const parsedResults = chrono.parse(prompt);
-    if (parsedResults.length === 0) {
-        return res.status(400).send('No se pudo encontrar una fecha en el texto.');
-    }
-
-    const parsedDate = parsedResults[0].start.date(); // Fecha extraída
-
-    // Capturar el título del evento de la entrada del usuario
-    const tituloEvento = prompt.match(/programa(?:r)? (.+?) a/i);
-    if (!tituloEvento || tituloEvento.length < 2) {
-        return res.status(400).send('Por favor proporciona el título del evento.');
-    }
-
-    // Generar evento en formato JSON para FullCalendar
-    const event = {
-        title: tituloEvento[1].trim(),  // Título del evento extraído de la entrada
-        start: parsedDate.toISOString(),
-        allDay: false
-    };
-
-    // Agregar evento a la lista
-    eventos.push(event);
-
-    // Generar sugerencia simple de mejora sobre el horario
-    const suggestion = generarSugerenciaHorario(parsedDate);
-
-    // Enviar respuesta con sugerencia y evento guardado
-    console.log('Evento generado:', event);
-    console.log('Sugerencia generada:', suggestion);
-    res.json({ reply: `Evento guardado. Sugerencia: ${suggestion}`, event: event });
+    // Responder con la salida generada
+    res.json({ reply: respuestaIA });
 });
 
-// Rutas
+// Rutas para la UI
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '/pages/index.html'));
 });
@@ -138,7 +86,6 @@ app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, '/pages/login.html'));
 });
 
-// Iniciar el servidor
 app.listen(port, () => {
     console.log(`Servidor corriendo en http://localhost:${port}`);
 });
