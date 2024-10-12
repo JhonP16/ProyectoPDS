@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const bodyParser = require('body-parser');
 const path = require('path');
+const mongoose = require('mongoose'); // Conexión a MongoDB
 const chrono = require('chrono-node');
 require('dotenv').config();
 
@@ -11,16 +12,28 @@ const port = 4000;
 app.use(express.static(__dirname));
 app.use(bodyParser.json());
 
-let eventos = [];
+// todo lo de mogo
+mongoose.connect('mongodb://localhost:27017/calendar', { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log('Conectado a MongoDB'))
+    .catch((err) => console.error('Error al conectar a MongoDB:', err));
+
+// Esquema para almacenar eventos en MongoDB
+const eventSchema = new mongoose.Schema({
+    title: String,
+    start: Date,
+    allDay: Boolean
+});
+
+const Event = mongoose.model('Event', eventSchema);
 
 // Función para solicitar respuesta a Hugging Face con un modelo de lenguaje
 const obtenerRespuestaIA = async (mensajeUsuario) => {
     const apiKey = process.env.HUGGING_FACE_API_KEY;
-    console.log('Api',apiKey);
+    console.log('Api', apiKey);
     const apiURL = 'https://api-inference.huggingface.co/models/gpt2';
-    
+
     try {
-        const response = await axios.post(apiURL, 
+        const response = await axios.post(apiURL,
             {
                 inputs: mensajeUsuario,
                 parameters: {
@@ -73,19 +86,44 @@ app.post('/chat', async (req, res) => {
     res.json({ reply: respuestaIA });
 });
 
+// Ruta para agregar un evento
+app.post('/event', async (req, res) => {
+    const { title, start, allDay } = req.body;
+
+    const newEvent = new Event({ title, start, allDay });
+
+    try {
+        const savedEvent = await newEvent.save(); // Guardar el evento en MongoDB
+        res.json({ message: 'Evento guardado', event: savedEvent });
+    } catch (error) {
+        res.status(500).json({ message: 'Error al guardar el evento', error });
+    }
+});
+
+// Ruta para obtener todos los eventos
+app.get('/events', async (req, res) => {
+    try {
+        const events = await Event.find(); // Obtener todos los eventos de MongoDB
+        res.json(events);
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener los eventos', error });
+    }
+});
+
 // Rutas para la UI
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '/pages/index.html'));
+    res.sendFile(path.join(__dirname, 'pages/index.html'));
 });
 
 app.get('/calendar', (req, res) => {
-    res.sendFile(path.join(__dirname, '/pages/calendario.html'));
+    res.sendFile(path.join(__dirname, 'pages/calendario.html'));
 });
 
 app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, '/pages/login.html'));
+    res.sendFile(path.join(__dirname, 'pages/login.html'));
 });
 
+// Iniciar el servidor
 app.listen(port, () => {
     console.log(`Servidor corriendo en http://localhost:${port}`);
 });

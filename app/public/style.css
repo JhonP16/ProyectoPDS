@@ -75,7 +75,7 @@ body {
 .principal span::before {
     content: 'sencilla';
     color: #6632c7;
-    animation: words 20s forwards; 
+    animation: words 15s forwards; 
 }
 
 .principal span::after {
@@ -87,7 +87,7 @@ body {
     height: 100%;
     border-left: 3px solid #eef0fc;
     right: -8px;
-    animation: cursor 0.6s infinite, tipico 20s forwards; 
+    animation: cursor 0.6s infinite, tipico 15s forwards; 
 }
 
 @keyframes cursor {
