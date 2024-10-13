@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URUTE - login</title>
+    <title>URUTE - signup</title>
     <link rel="stylesheet" href="../public/login.css">
 </head>
 <body>
 <section class="container">
-    <form class="form" action="/authenticate" method="post">
-       <p class="form-title">Inicia sesión</p>
+    <form class="form" action="/register" method="post">
+       <p class="form-title">Regístrate</p>
         <div class="input-container">
           <input type="email" id="email" name="email" placeholder="Email">
           <span>
@@ -19,12 +19,12 @@
           <input type="password" id="password" name="password" placeholder="Contraseña">
         </div>
          <button type="submit" class="submit">
-        Ingresar
+        Registrarse
       </button>
 
       <p class="signup-link">
-        Sin cuenta?
-        <a href="signup.html">Regístrate</a>
+        Ya tienes una cuenta?
+        <a href="login.html">Inicia sesión</a>
       </p>
    </form>
 </section>

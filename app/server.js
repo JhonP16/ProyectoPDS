@@ -4,7 +4,8 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const chrono = require('chrono-node');
 
-//Conexiones MongoDB
+//Conexiones iniciales a MongoDB
+const User = require('./public/user');
 const mongoose = require('mongoose'); // Conexión a MongoDB
 const bcrypt = require('bcrypt'); // Encriptación de contraseñas
 const mongo_uri = 'mongodb://localhost:27017/calendario'; // URI de MongoDB
@@ -16,6 +17,7 @@ const port = 4000;
 
 app.use(express.static(__dirname));
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 
 // TODO LO DE MONGODB
 mongoose.set('strictQuery', true);
@@ -24,14 +26,41 @@ mongoose.connect(mongo_uri, { useNewUrlParser: true, useUnifiedTopology: true })
 .then(() => console.log('Conectado a MongoDB'))
 .catch((err) => console.error('Error al conectar a MongoDB:', err));
 
-// Esquema para almacenar eventos en MongoDB
-// const eventSchema = new mongoose.Schema({
-//     title: String,
-//     start: Date,
-//     allDay: Boolean
-// });
+// registrar usuario e iniciar sesión
+app.post('/register', (req, res) => {
+    const { email, password } = req.body;
+    const user = new User({ email, password });
+    user.save(err =>{
+        if(err){
+            res.status(500).send('Error al registrar usuario');
+        }else{
+            res.status(200).send('Usuario registrado');
+        }
+    });
+});
 
-// const Event = mongoose.model('Event', eventSchema);
+app.post('/authenticate', (req, res) => {
+    const { email, password } = req.body;
+
+    User.findOne({email}, (err, user) =>{
+        if(err){
+            res.status(500).send('Error al autenticar usuario');
+        }else if(!user){
+            res.status(500).send('Usuario no encontrado');
+        }else{
+            user.isCorrectPassword(password, (err, result) =>{
+                if(err){
+                    res.status(500).send('Error al autenticar usuario');
+                }else if(result){
+                    res.status(200).send('Usuario autenticado');
+                }else{
+                    res.status(500).send('Usuario o Contraseña incorrecta');
+                }
+            });
+        }
+    });
+});
+
 
 // Función para solicitar respuesta a Hugging Face con un modelo de lenguaje
 const obtenerRespuestaIA = async (mensajeUsuario) => {
@@ -126,8 +155,12 @@ app.get('/calendar', (req, res) => {
     res.sendFile(path.join(__dirname, 'pages/calendario.html'));
 });
 
-app.get('/login', (req, res) => {
+app.get('/login.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'pages/login.html'));
+});
+
+app.get('/signup.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages/signup.html'));
 });
 
 // Iniciar el servidor
