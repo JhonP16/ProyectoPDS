@@ -2,8 +2,13 @@ const express = require('express');
 const axios = require('axios');
 const bodyParser = require('body-parser');
 const path = require('path');
-const mongoose = require('mongoose'); // Conexión a MongoDB
 const chrono = require('chrono-node');
+
+//Conexiones MongoDB
+const mongoose = require('mongoose'); // Conexión a MongoDB
+const bcrypt = require('bcrypt'); // Encriptación de contraseñas
+const mongo_uri = 'mongodb://localhost:27017/calendario'; // URI de MongoDB
+
 require('dotenv').config();
 
 const app = express();
@@ -12,19 +17,21 @@ const port = 4000;
 app.use(express.static(__dirname));
 app.use(bodyParser.json());
 
-// todo lo de mogo
-mongoose.connect('mongodb://localhost:27017/calendar', { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log('Conectado a MongoDB'))
-    .catch((err) => console.error('Error al conectar a MongoDB:', err));
+// TODO LO DE MONGODB
+mongoose.set('strictQuery', true);
+
+mongoose.connect(mongo_uri, { useNewUrlParser: true, useUnifiedTopology: true })
+.then(() => console.log('Conectado a MongoDB'))
+.catch((err) => console.error('Error al conectar a MongoDB:', err));
 
 // Esquema para almacenar eventos en MongoDB
-const eventSchema = new mongoose.Schema({
-    title: String,
-    start: Date,
-    allDay: Boolean
-});
+// const eventSchema = new mongoose.Schema({
+//     title: String,
+//     start: Date,
+//     allDay: Boolean
+// });
 
-const Event = mongoose.model('Event', eventSchema);
+// const Event = mongoose.model('Event', eventSchema);
 
 // Función para solicitar respuesta a Hugging Face con un modelo de lenguaje
 const obtenerRespuestaIA = async (mensajeUsuario) => {
