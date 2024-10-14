@@ -1,4 +1,61 @@
-/* From Uiverse.io by nathann09 */ 
+body{
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  font-size: 24px;
+  color: #7a3eec;
+}
+
+.logo i {
+  margin-right: 10px;
+}
+
+.navbar nav ul {
+  list-style-type: none;
+  display: flex;
+  gap: 20px;
+}
+
+.navbar nav ul li a {
+  text-decoration: none;
+  color: #333;
+  border-bottom: 3px solid transparent;
+  margin-left: 2rem;
+  transition: .3s ease;
+}
+.navbar nav ul li a:hover {
+  border-bottom: 3px solid #6632c7;
+}
+
+.registros a {
+  text-decoration: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+}
+
+.registros .login {
+  color: #7a3eec;
+  border: 1px solid #7a3eec;
+}
+
+.registros .get-started {
+  background-color: #7a3eec;
+  color: white;
+}
 
 section{
     display: flex;
