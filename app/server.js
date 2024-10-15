@@ -151,7 +151,7 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'pages/index.html'));
 });
 
-app.get('/calendar', (req, res) => {
+app.get('/calendario.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'pages/calendario.html'));
 });
 
