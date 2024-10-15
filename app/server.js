@@ -106,6 +106,12 @@ app.post('/chat', async (req, res) => {
         if (saludoDespedida.includes('adiós') || saludoDespedida.includes('adios')) {
             return '¡Hasta luego! Que tengas un buen día.';
         }
+        if (saludoDespedida.includes('que haces') || saludoDespedida.includes('que resuelves') || saludoDespedida.includes('como funcionas')) {
+            return 'Lo que hago es agendar tus actividades por medio de mensajes, dandote consejos y ahorrandote tiempo en guardar tus eventos manualmene :D.';
+        }
+        if (saludoDespedida.includes('dame un ejemplo') ||saludoDespedida.includes('dame ejemplos')) {
+            return 'Claro!, por ejemplo escribe "quiero que mañana me agendes una cita con mi doctor de 10:00 a.m a 12:00 p.m". Yo guardare los datos y se visualizará en el calendario.';
+        }
         return null;  // No es saludo ni despedida
     };
 
