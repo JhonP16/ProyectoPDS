@@ -585,8 +585,8 @@ function saveEvents() {
 // CREAR UNA FUNCION PARA CARGAR LOS EVENTOS DE MEMORIA LOCAL
 function getEvents() {
   // PLANTEAR UNA ESTRUCTURA DE DESICION | CONDICIONAL
-  if (localStorage.getItem("events") === null) {
+    if (localStorage.getItem("events") === null) {
     return;
-  }
-  eventsArr.push(...JSON.parse(localStorage.getItem("events")));
+    }
+    eventsArr.push(...JSON.parse(localStorage.getItem("events")));
 }

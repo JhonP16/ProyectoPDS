@@ -6,13 +6,21 @@
   margin: 0; padding: 0; box-sizing: border-box; font-family: "Poppins", sans-serif;
 }
 
-body {
-  min-height: 200vh; display: flex; align-items: center; justify-content: center; background-color: #e2e1dc;
+.navbar {
+  height: 100px;
+}
+
+.navbar .logo span a {
+  text-decoration: none; color: #6632c7;
+}
+
+.navbar .logo span a:hover {
+  color: #000; transition: 0.5s;
 }
 
 .cont-ucalendar {
   position: relative; width: 1200px; min-height: 850px; margin: 0 auto; padding: 5px; color: #fff; display: flex;
-  border-radius: 10px; background-color: #373c4f;
+  border-radius: 10px; background-color: #373c4f; margin-top: 100px;
 }
 
 .left {
