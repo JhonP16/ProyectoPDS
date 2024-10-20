@@ -34,7 +34,7 @@ app.post('/register', (req, res) => {
         if(err){
             res.status(500).send('Error al registrar usuario');
         }else{
-            res.status(200).send('Usuario registrado');
+            res.redirect('./pages/index.html'); // Redirigir al usuario a index.html
         }
     });
 });
@@ -52,7 +52,7 @@ app.post('/authenticate', (req, res) => {
                 if(err){
                     res.status(500).send('Error al autenticar usuario');
                 }else if(result){
-                    res.status(200).send('Usuario autenticado');
+                    res.redirect('./pages/index.html'); // Redirigir al usuario a index.html
                 }else{
                     res.status(500).send('Usuario o Contraseña incorrecta');
                 }
