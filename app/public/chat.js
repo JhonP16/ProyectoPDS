@@ -35,11 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const data = await response.json();
-            // Mostrar la respuesta de Hugging Face
+            // Mostrar la respuesta de la IA
             displayMessage(`Modelo AI: ${data.reply}`);
         } catch (error) {
             console.error('Error al enviar el mensaje:', error);
-            displayMessage('Error al obtener la respuesta | Faltan datos.');
+            displayMessage('Error al obtener la respuesta.');
         }
     }
 

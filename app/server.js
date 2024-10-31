@@ -1,154 +1,88 @@
-const express = require('express');
-const axios = require('axios');
-const bodyParser = require('body-parser');
-const path = require('path');
-const chrono = require('chrono-node');
+import express from "express";
+import bodyParser from "body-parser";
+import path from "path";
+import mongoose from "mongoose";
+import Groq from "groq-sdk";
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
 
-//Conexiones iniciales a MongoDB
-const User = require('./public/user');
-const mongoose = require('mongoose'); // Conexión a MongoDB
-const bcrypt = require('bcrypt'); // Encriptación de contraseñas
-const mongo_uri = 'mongodb://localhost:27017/calendario'; // URI de MongoDB
+// Obtener __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-require('dotenv').config();
+// Cargar variables de entorno
+dotenv.config();
 
+// Configuración de Express y MongoDB
 const app = express();
 const port = 4000;
+const mongoUri = 'mongodb://localhost:27017/calendario';
 
-app.use(express.static(__dirname));
+// Servir archivos estáticos desde la carpeta 'public'
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Middleware para procesar el cuerpo de las solicitudes
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-// TODO LO DE MONGODB
+// Conexión a MongoDB
 mongoose.set('strictQuery', true);
+mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log('Conectado a MongoDB'))
+    .catch((err) => console.error('Error al conectar a MongoDB:', err));
 
-mongoose.connect(mongo_uri, { useNewUrlParser: true, useUnifiedTopology: true })
-.then(() => console.log('Conectado a MongoDB'))
-.catch((err) => console.error('Error al conectar a MongoDB:', err));
+// Inicializar Groq Cloud SDK
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// registrar usuario e iniciar sesión
-app.post('/register', (req, res) => {
-    const { email, password } = req.body;
-    const user = new User({ email, password });
-    user.save(err =>{
-        if(err){
-            res.status(500).send('Error al registrar usuario');
-        }else{
-            res.redirect('./pages/index.html'); // Redirigir al usuario a index.html
-        }
-    });
-});
-
-app.post('/authenticate', (req, res) => {
-    const { email, password } = req.body;
-
-    User.findOne({email}, (err, user) =>{
-        if(err){
-            res.status(500).send('Error al autenticar usuario');
-        }else if(!user){
-            res.status(500).send('Usuario no encontrado');
-        }else{
-            user.isCorrectPassword(password, (err, result) =>{
-                if(err){
-                    res.status(500).send('Error al autenticar usuario');
-                }else if(result){
-                    res.redirect('./pages/index.html'); // Redirigir al usuario a index.html
-                }else{
-                    res.status(500).send('Usuario o Contraseña incorrecta');
-                }
-            });
-        }
-    });
-});
-
-
-// Función para solicitar respuesta a Hugging Face con un modelo de lenguaje
-const obtenerRespuestaIA = async (mensajeUsuario) => {
-    const apiKey = process.env.HUGGING_FACE_API_KEY;
-    console.log('Api', apiKey);
-    const apiURL = 'https://api-inference.huggingface.co/models/gpt2';
-
+// Función para obtener respuesta desde Groq Cloud
+async function obtenerRespuestaGroq(mensajeUsuario) {
     try {
-        const response = await axios.post(apiURL,
-            {
-                inputs: mensajeUsuario,
-                parameters: {
-                    max_length: 50, // Limitar la longitud de la respuesta para que sea corta
-                    temperature: 0.7 // Controlar la creatividad del modelo (0.7 es un buen balance)
-                }
-            },
-            {
-                headers: { 'Authorization': `Bearer ${apiKey}` }
-            }
-        );
-
-        return response.data[0].generated_text;
+        const response = await groq.chat.completions.create({
+            messages: [
+                {
+                    role: "user",
+                    content: mensajeUsuario,
+                },
+            ],
+            model: "llama3-8b-8192", // Ajusta el modelo si es necesario
+        });
+        
+        return response.choices[0]?.message?.content || "No se obtuvo respuesta.";
     } catch (error) {
-        console.error('Error al obtener respuesta de Hugging Face:', error);
-        return 'Lo siento, hubo un problema al procesar tu solicitud.';
+        console.error('Error al obtener respuesta de Groq Cloud:', error);
+        return 'Lo siento, hubo un problema al procesar tu solicitud con Groq Cloud.';
     }
-};
+}
 
-// Ruta para manejar el chat
+import Actividad from './models/actividad.js'; //Ruta para almacenar en Mongo
+// Interaccion con el chat
 app.post('/chat', async (req, res) => {
     const prompt = req.body.prompt;
     console.log('Mensaje recibido del usuario:', prompt);
 
-    // Función para manejar saludos y despedidas
-    const manejarSaludoODespedida = (mensaje) => {
-        const saludoDespedida = mensaje.toLowerCase();
-        if (saludoDespedida.includes('hola')) {
-            return '¡Hola! ¿En qué puedo ayudarte hoy?';
+    // Verifica si el mensaje del usuario contiene una solicitud de agendar una actividad
+    const actividadRegex = /agendar una actividad: (.+?) el (\d{4}-\d{2}-\d{2})/; // Ejemplo: "agendar una actividad: ir al cine el 2024-11-01"
+    const match = prompt.match(actividadRegex);
+
+    if (match) {
+        const nombre = match[1];
+        const fecha = new Date(match[2]);
+        const usuario = 'Usuario'; // Esto se cambio si se quiere saber un usuario en especifico
+
+        // Crear una nueva actividad
+        const nuevaActividad = new Actividad({ nombre, fecha, usuario });
+
+        try {
+            // Guardar la actividad en MongoDB
+            await nuevaActividad.save();
+            res.json({ reply: `Actividad "${nombre}" agendada para el ${fecha.toDateString()}.` });
+        } catch (error) {
+            console.error('Error al guardar la actividad:', error);
+            res.json({ reply: 'Lo siento, hubo un problema al agendar la actividad.' });
         }
-        if (saludoDespedida.includes('gracias')) {
-            return '¡De nada! Siempre feliz de ayudar.';
-        }
-        if (saludoDespedida.includes('adiós') || saludoDespedida.includes('adios')) {
-            return '¡Hasta luego! Que tengas un buen día.';
-        }
-        if (saludoDespedida.includes('que haces') || saludoDespedida.includes('que resuelves') || saludoDespedida.includes('como funcionas')) {
-            return 'Lo que hago es agendar tus actividades por medio de mensajes, dandote consejos y ahorrandote tiempo en guardar tus eventos manualmene :D.';
-        }
-        if (saludoDespedida.includes('dame un ejemplo') ||saludoDespedida.includes('dame ejemplos')) {
-            return 'Claro!, por ejemplo escribe "quiero que mañana me agendes una cita con mi doctor de 10:00 a.m a 12:00 p.m". Yo guardare los datos y se visualizará en el calendario.';
-        }
-        return null;  // No es saludo ni despedida
-    };
-
-    // Verificar si es un saludo o despedida
-    const saludoRespuesta = manejarSaludoODespedida(prompt);
-    if (saludoRespuesta) {
-        return res.json({ reply: saludoRespuesta });
-    }
-
-    // Si no es un saludo, obtener respuesta generada por IA
-    const respuestaIA = await obtenerRespuestaIA(prompt);
-
-    // Responder con la salida generada
-    res.json({ reply: respuestaIA });
-});
-
-// Ruta para agregar un evento
-app.post('/event', async (req, res) => {
-    const { title, start, allDay } = req.body;
-
-    const newEvent = new Event({ title, start, allDay });
-
-    try {
-        const savedEvent = await newEvent.save(); // Guardar el evento en MongoDB
-        res.json({ message: 'Evento guardado', event: savedEvent });
-    } catch (error) {
-        res.status(500).json({ message: 'Error al guardar el evento', error });
-    }
-});
-
-// Ruta para obtener todos los eventos
-app.get('/events', async (req, res) => {
-    try {
-        const events = await Event.find(); // Obtener todos los eventos de MongoDB
-        res.json(events);
-    } catch (error) {
-        res.status(500).json({ message: 'Error al obtener los eventos', error });
+    } else {
+        const respuestaGroq = await obtenerRespuestaGroq(prompt);
+        res.json({ reply: respuestaGroq });
     }
 });
 
