@@ -55,23 +55,23 @@ async function obtenerRespuestaGroq(mensajeUsuario) {
 }
 
 import Actividad from './models/actividad.js'; //Ruta para almacenar en Mongo
-// Interaccion con el chat
+// Interacción con el chat
 app.post('/chat', async (req, res) => {
     const prompt = req.body.prompt;
     console.log('Mensaje recibido del usuario:', prompt);
 
     // Verifica si el mensaje del usuario contiene una solicitud de agendar una actividad
     const actividadRegex = /agendar una actividad: (.+?) el (\d{4}-\d{2}-\d{2}) a las (\d{1,2}:\d{2} [ap]\.m\.)/;
-    const match = prompt.match(actividadRegex);
+    const matchAgendar = prompt.match(actividadRegex);
 
-    if (match) {
-        const nombre = match[1];
-        const fecha = new Date(match[2]);
-        const hora = match[3]; // Hora capturada
+    if (matchAgendar) {
+        const nombre = matchAgendar[1];
+        const fecha = new Date(matchAgendar[2]);
+        const hora = matchAgendar[3]; // Hora capturada
         const usuario = 'Usuario'; // Esto se cambia si deseas identificar un usuario específico
-    
+
         const nuevaActividad = new Actividad({ nombre, fecha, hora, usuario });
-    
+
         try {
             await nuevaActividad.save();
             res.json({ reply: `Actividad "${nombre}" agendada para el ${fecha.toDateString()} a las ${hora}.` });
@@ -80,13 +80,34 @@ app.post('/chat', async (req, res) => {
             res.json({ reply: 'Lo siento, hubo un problema al agendar la actividad.' });
         }
     } else {
-        const respuestaGroq = await obtenerRespuestaGroq(prompt);
-        res.json({ reply: respuestaGroq });
+        // Verifica si el mensaje contiene una solicitud de borrar una actividad
+        const borrarRegex = /borrar (.+)/;
+        const matchBorrar = prompt.match(borrarRegex);
+
+        if (matchBorrar) {
+            const nombreActividad = matchBorrar[1].trim();
+
+            try {
+                const actividadEliminada = await Actividad.findOneAndDelete({ nombre: nombreActividad });
+
+                if (actividadEliminada) {
+                    res.json({ reply: `La actividad "${nombreActividad}" ha sido eliminada con éxito.` });
+                } else {
+                    res.json({ reply: `No se encontró ninguna actividad con el nombre "${nombreActividad}".` });
+                }
+            } catch (error) {
+                console.error('Error al borrar la actividad:', error);
+                res.json({ reply: 'Hubo un problema al intentar borrar la actividad.' });
+            }
+        } else {
+            // Si no es una solicitud de agendar o borrar, usa la función de Groq para otras respuestas
+            const respuestaGroq = await obtenerRespuestaGroq(prompt);
+            res.json({ reply: respuestaGroq });
+        }
     }
 });
 
 //Ruta para el calendario
-
 app.get("/api/get-events", async (req, res) => {
     try {
         const events = await Actividad.find({}); 
@@ -96,8 +117,23 @@ app.get("/api/get-events", async (req, res) => {
     }
 });
 
+// Ruta para borrar una actividad por su nombre
+app.delete('/api/delete-activity', async (req, res) => {
+    const nombre = req.body.nombre; // Nombre de la actividad que se desea borrar
 
+    try {
+        const actividadEliminada = await Actividad.findOneAndDelete({ nombre });
 
+        if (actividadEliminada) {
+            res.json({ reply: `La actividad "${nombre}" ha sido eliminada con éxito.` });
+        } else {
+            res.json({ reply: `No se encontró ninguna actividad con el nombre "${nombre}".` });
+        }
+    } catch (error) {
+        console.error('Error al borrar la actividad:', error);
+        res.status(500).json({ reply: 'Hubo un problema al intentar borrar la actividad.' });
+    }
+});
 
 // Rutas para la UI
 app.get('/', (req, res) => {
