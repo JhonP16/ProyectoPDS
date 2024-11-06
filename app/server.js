@@ -61,21 +61,20 @@ app.post('/chat', async (req, res) => {
     console.log('Mensaje recibido del usuario:', prompt);
 
     // Verifica si el mensaje del usuario contiene una solicitud de agendar una actividad
-    const actividadRegex = /agendar una actividad: (.+?) el (\d{4}-\d{2}-\d{2})/; // Ejemplo: "agendar una actividad: ir al cine el 2024-11-01"
+    const actividadRegex = /agendar una actividad: (.+?) el (\d{4}-\d{2}-\d{2}) a las (\d{1,2}:\d{2} [ap]\.m\.)/;
     const match = prompt.match(actividadRegex);
 
     if (match) {
         const nombre = match[1];
         const fecha = new Date(match[2]);
-        const usuario = 'Usuario'; // Esto se cambio si se quiere saber un usuario en especifico
-
-        // Crear una nueva actividad
-        const nuevaActividad = new Actividad({ nombre, fecha, usuario });
-
+        const hora = match[3]; // Hora capturada
+        const usuario = 'Usuario'; // Esto se cambia si deseas identificar un usuario específico
+    
+        const nuevaActividad = new Actividad({ nombre, fecha, hora, usuario });
+    
         try {
-            // Guardar la actividad en MongoDB
             await nuevaActividad.save();
-            res.json({ reply: `Actividad "${nombre}" agendada para el ${fecha.toDateString()}.` });
+            res.json({ reply: `Actividad "${nombre}" agendada para el ${fecha.toDateString()} a las ${hora}.` });
         } catch (error) {
             console.error('Error al guardar la actividad:', error);
             res.json({ reply: 'Lo siento, hubo un problema al agendar la actividad.' });
@@ -85,6 +84,20 @@ app.post('/chat', async (req, res) => {
         res.json({ reply: respuestaGroq });
     }
 });
+
+//Ruta para el calendario
+
+app.get("/api/get-events", async (req, res) => {
+    try {
+        const events = await Actividad.find({}); 
+        res.json(events);
+    } catch (error) {
+        res.status(500).send("Error al obtener eventos");
+    }
+});
+
+
+
 
 // Rutas para la UI
 app.get('/', (req, res) => {
